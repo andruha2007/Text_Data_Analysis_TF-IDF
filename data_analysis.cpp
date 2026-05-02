@@ -12,7 +12,6 @@
 #include <cmath>
 #include <unordered_set>
 
-
 // это пока что выглядит плохо
 std::unordered_map<std::string, std::unordered_map<std::string, size_t>> doc_word_freq; // слова в каждом документе 
 std::unordered_map<std::string, size_t> word_freq; // слова во всех документах
@@ -21,7 +20,6 @@ std::unordered_map<std::string, size_t> count_of_words; // количество 
 std::vector<std::string> file_names;
 std::unordered_map<std::string, std::unordered_set<std::string>> count_of_docs_with_word; // df
 std::unordered_map<std::string, std::unordered_set<std::string>> unique_words_in_docs;
-std::unordered_map<std::string, std::unordered_map<std::string, std::vector<size_t>>> doc_word_pos;
 
 bool valide_word(const std::string& word){
     return count_of_docs_with_word.find(word) == count_of_docs_with_word.end();
@@ -66,7 +64,7 @@ void fill_statistics(const std::string& file_name){
     std::string raw_string{
         std::istreambuf_iterator<char>(file),
         std::istreambuf_iterator<char>()
-    }; // чтение файла в отдельную функцию
+    };
 
     if (raw_string.empty()){
         std::cout << "WARNING: [DOCUMENT]: The document \"" << file_name << "\" is empty\n";
@@ -77,7 +75,7 @@ void fill_statistics(const std::string& file_name){
         [](unsigned char c){ return static_cast<char>(std::tolower(c)); }); // переделать в обработку юникод
 
     std::replace_if(raw_string.begin(), raw_string.end(),
-        [](unsigned char c){ return !std::isalpha(c); }, ' '); // сохранять дефисы и апострафы
+        [](unsigned char c){ return !std::isalpha(c); }, ' ');
 
     std::stringstream iss(raw_string);
 
@@ -89,16 +87,13 @@ void fill_statistics(const std::string& file_name){
     std::unordered_map<std::string, size_t> word_freq_in_doc;
     std::unordered_set<std::string> unique_words_in_doc;
 
-    size_t pos = 1;
 
-    std::for_each(words.begin(), words.end(), [&word_freq_in_doc, &unique_words_in_doc, file_name, &pos](const std::string& word){
+    std::for_each(words.begin(), words.end(), [&word_freq_in_doc, &unique_words_in_doc, file_name](const std::string& word){
         ++word_freq_in_doc[word];
         ++word_freq[word];
         unique_words.insert(word);
         unique_words_in_doc.insert(word);
         ++count_of_words[file_name];
-        doc_word_pos[file_name][word].push_back(pos);
-        ++pos;
     });
 
     std::for_each(unique_words_in_doc.begin(), unique_words_in_doc.end(), [file_name](const std::string& word){
@@ -207,18 +202,6 @@ void query(int argc, char** argv){
 
 }
 
-// void query_all(int argc, char** argv){
-
-//     std::vector<std::string> phrase(argv + 2, argv + argc);
-//     std::vector<std::string> normalised_phrase;
-//     std::transform(phrase.begin(), phrase.end(), phrase.begin(), 
-//             [normalised_phrase](const std::string& word){return const_cast<std::string&>(normalise(word));});
-
-//     size_t count_of_phrase = 0;
-//     size_t pos = 0;
-//     std::vector<std::string> docs_with_phrase;
-// }
-
 int main(int argc, char** argv){
     if (argc < 2) throw std::runtime_error("ERRROR [INPUT]: Not enough arguments");
 
@@ -235,21 +218,16 @@ int main(int argc, char** argv){
 
     if (std::string(argv[1]) == "WORD"){
         if (argc < 3) throw std::runtime_error("ERRROR [INPUT]: Not enough arguments");
-            word(std::string(argv[2]));
+        word(std::string(argv[2]));
     } else if (std::string(argv[1]) == "WORD_IN_DOC"){
         if (argc < 4) throw std::runtime_error("ERRROR [INPUT]: Not enough arguments"); 
-            word_in_doc(std::string(argv[2]), std::string(argv[3])); 
-
+        word_in_doc(std::string(argv[2]), std::string(argv[3])); 
     } else if (std::string(argv[1]) == "DOC"){
         if (argc < 3) throw std::runtime_error("ERRROR [INPUT]: Not enough arguments"); 
-            doc(std::string(argv[2]));
-        
+        doc(std::string(argv[2]));
     } else if (std::string(argv[1]) == "QUERY"){
         if (argc < 3) throw std::runtime_error("ERRROR [INPUT]: Not enough arguments"); 
         query(argc, argv);
-    // } else if (std::string(argv[1]) == "QUERY_ALL"){
-    //     if (argc < 3) throw std::runtime_error("ERRROR [INPUT]: Not enough arguments"); 
-    //     query_all(argc, argv);
     } else {
         throw std::runtime_error("ERRROR [INPUT]: Unknown command");
     }
